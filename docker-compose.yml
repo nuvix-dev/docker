@@ -1,0 +1,148 @@
+name: nuvix
+
+services:
+  postgres:
+    image: nuvix/postgres:latest
+    container_name: nuvix-postgres
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      POSTGRES_PASSWORD: ${NUVIX_DATABASE_ADMIN_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+
+    ports:
+      - "${NUVIX_DATABASE_PORT:-5432}:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    networks:
+      - nuvix
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "PGPASSWORD=${NUVIX_DATABASE_ADMIN_PASSWORD} pg_isready -U nuvix_admin -d postgres -h localhost"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+
+  redis:
+    image: redis:7.2
+    container_name: nuvix-redis
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+
+    env_file:
+      - .env
+
+    ports:
+      - "${NUVIX_REDIS_PORT:-6379}:6379"
+
+    volumes:
+      - ./configs/redis.conf:/usr/local/etc/redis/redis.conf
+      - redis_data:/data
+
+    restart: unless-stopped
+    networks:
+      - nuvix
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+
+  server:
+    image: nuvix/server:latest
+    container_name: nuvix-server
+
+    env_file:
+      - .env
+
+    environment:
+      NODE_ENV: production
+      NUVIX_DATABASE_HOST: postgres
+      NUVIX_DATABASE_POOL_HOST: postgres
+      NUVIX_REDIS_HOST: redis
+
+    ports:
+      - "${NUVIX_API_PORT:-4000}:4000"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    volumes:
+      - nuvix_storage:/app/storage
+
+    networks:
+      - nuvix
+    restart: unless-stopped
+
+
+  platform:
+    image: nuvix/platform:latest
+    container_name: nuvix-platform
+
+    env_file:
+      - .env
+
+    environment:
+      NODE_ENV: production
+      NUVIX_DATABASE_HOST: postgres
+      NUVIX_DATABASE_POOL_HOST: postgres
+      NUVIX_REDIS_HOST: redis
+
+    ports:
+      - "${NUVIX_PLATFORM_PORT:-4100}:4100"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    networks:
+      - nuvix
+    restart: unless-stopped
+
+
+  console:
+    image: nuvix/console:latest
+    container_name: nuvix-console
+
+    ports:
+      - "${NUVIX_CONSOLE_PORT:-3000}:3000"
+
+    environment:
+      NEXT_PUBLIC_NUVIX_ENDPOINT: http://localhost:${NUVIX_API_PORT:-4000}/v1
+      NEXT_PUBLIC_SERVER_ENDPOINT: http://localhost:${NUVIX_PLATFORM_PORT:-4100}
+
+    depends_on:
+      server:
+        condition: service_started
+
+    networks:
+      - nuvix
+    restart: unless-stopped
+
+
+volumes:
+  postgres_data:
+  redis_data:
+  nuvix_storage:
+
+networks:
+  nuvix:
+    driver: bridge
