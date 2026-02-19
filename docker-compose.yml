@@ -56,7 +56,7 @@ services:
 
 
   server:
-    image: nuvix/server:1.0.0
+    image: nuvix/server:latest
     container_name: nuvix-server
 
     env_file:
@@ -86,7 +86,7 @@ services:
 
 
   platform:
-    image: nuvix/platform:1.0.0
+    image: nuvix/platform:latest
     container_name: nuvix-platform
 
     env_file:
@@ -113,7 +113,7 @@ services:
 
 
   console:
-    image: nuvix/console:1.0.0
+    image: nuvix/console:latest
     container_name: nuvix-console
 
     ports:
