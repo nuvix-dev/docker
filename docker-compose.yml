@@ -2,15 +2,14 @@ name: nuvix
 
 services:
   postgres:
-    image: nuvix/postgres:17
-    container_name: nuvix-postgres
+    image: nuvix/postgres:18.1
     restart: unless-stopped
 
     env_file:
       - .env
 
     environment:
-      POSTGRES_PASSWORD: ${NUVIX_DATABASE_ADMIN_PASSWORD}
+      POSTGRES_PASSWORD: ${NUVIX_DATABASE_PASSWORD}
       PGDATA: /var/lib/postgresql/data/pgdata
 
     volumes:
@@ -19,21 +18,8 @@ services:
     networks:
       - nuvix
 
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "PGPASSWORD=${NUVIX_DATABASE_ADMIN_PASSWORD} pg_isready -U nuvix_admin -d postgres -h localhost"
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-
   redis:
     image: redis:7.2
-    container_name: nuvix-redis
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
 
     env_file:
@@ -56,8 +42,7 @@ services:
 
 
   server:
-    image: nuvix/server:latest
-    container_name: nuvix-server
+    image: nuvix/server:0.1.0
 
     env_file:
       - .env
@@ -65,7 +50,6 @@ services:
     environment:
       NODE_ENV: production
       NUVIX_DATABASE_HOST: postgres
-      NUVIX_DATABASE_POOL_HOST: postgres
       NUVIX_REDIS_HOST: redis
 
     ports:
@@ -86,8 +70,7 @@ services:
 
 
   platform:
-    image: nuvix/platform:latest
-    container_name: nuvix-platform
+    image: nuvix/platform:0.1.0
 
     env_file:
       - .env
@@ -95,11 +78,10 @@ services:
     environment:
       NODE_ENV: production
       NUVIX_DATABASE_HOST: postgres
-      NUVIX_DATABASE_POOL_HOST: postgres
       NUVIX_REDIS_HOST: redis
 
     ports:
-      - "${NUVIX_PLATFORM_PORT:-4100}:${NUVIX_PLATFORM_PORT:-4100}"
+      - "${NUVIX_CONSOLE_API_PORT:-4100}:${NUVIX_CONSOLE_API_PORT:-4100}"
 
     depends_on:
       postgres:
@@ -113,18 +95,17 @@ services:
 
 
   console:
-    image: nuvix/console:latest
-    container_name: nuvix-console
+    image: nuvix/console:0.1.0
 
     ports:
       - "${NUVIX_CONSOLE_PORT:-3000}:3000"
   
     environment:
       NUVIX_API_ENDPOINT: http://localhost:${NUVIX_API_PORT:-4000}/v1
-      NUVIX_PLATFORM_ENDPOINT: http://localhost:${NUVIX_PLATFORM_PORT:-4100}
+      NUVIX_PLATFORM_ENDPOINT: http://localhost:${NUVIX_CONSOLE_API_PORT:-4100}
 
     depends_on:
-      server:
+      platform:
         condition: service_started
 
     networks:
