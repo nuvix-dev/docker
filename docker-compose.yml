@@ -18,11 +18,13 @@ services:
       - nuvix
 
   redis:
-    image: redis:7.2
-    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    image: redis:8.6
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf", "--requirepass", "${NUVIX_REDIS_PASSWORD}"]
 
     env_file:
       - .env
+    environment:
+      REDIS_PASSWORD: ${NUVIX_REDIS_PASSWORD}
 
     volumes:
       - ./configs/redis.conf:/usr/local/etc/redis/redis.conf
