@@ -1,5 +1,3 @@
-name: nuvix
-
 services:
   postgres:
     image: nuvix/postgres:18.1
