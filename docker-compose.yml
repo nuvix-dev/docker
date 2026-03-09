@@ -43,7 +43,7 @@ services:
 
 
   server:
-    image: nuvix/server:0.1.0
+    image: nuvix/server:latest
 
     env_file:
       - .env
@@ -72,7 +72,7 @@ services:
 
 
   platform:
-    image: nuvix/platform:0.1.0
+    image: nuvix/platform:latest
 
     env_file:
       - .env
@@ -98,7 +98,7 @@ services:
 
 
   console:
-    image: nuvix/console:0.1.0
+    image: nuvix/console:latest
 
     ports:
       - "${NUVIX_CONSOLE_PORT:-3000}:3000"
