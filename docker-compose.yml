@@ -5,7 +5,9 @@ services:
 
     env_file:
       - .env
-
+    ports:
+      - "${NUVIX_DATABASE_PORT:-5432}:5432"
+      
     environment:
       POSTGRES_PASSWORD: ${NUVIX_DATABASE_PASSWORD}
 
@@ -50,6 +52,7 @@ services:
       NODE_ENV: production
       NUVIX_DATABASE_HOST: postgres
       NUVIX_REDIS_HOST: redis
+      NUVIX_DATABASE_PORT: 5432
 
     ports:
       - "${NUVIX_API_PORT:-4000}:${NUVIX_API_PORT:-4000}"
@@ -78,6 +81,7 @@ services:
       NODE_ENV: production
       NUVIX_DATABASE_HOST: postgres
       NUVIX_REDIS_HOST: redis
+      NUVIX_DATABASE_PORT: 5432
 
     ports:
       - "${NUVIX_CONSOLE_API_PORT:-4100}:${NUVIX_CONSOLE_API_PORT:-4100}"
